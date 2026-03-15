@@ -1,9 +1,10 @@
-import { useContext, useEffect, useMemo, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { Coin } from '../../types/coin';
 import { CoinRow } from './CoinRow';
 import { Spinner } from '../atoms/Spinner';
 import { PerformanceContext } from '../../contexts/PerformanceContext';
+import { useFilterSortWorker } from '../../hooks/useFilterSortWorker';
+import type { Coin } from '../../types/coin';
 
 interface CoinTableProps {
   coins: Coin[];
@@ -13,29 +14,27 @@ interface CoinTableProps {
 }
 
 export function CoinTable({ coins, query, sort, isLoading }: CoinTableProps) {
-  const { trackFilterSort, trackRender, trackRenderTime, trackItemCounts } = useContext(PerformanceContext);
+  const { trackRender, trackRenderTime, trackE2ELatency } = useContext(PerformanceContext);
   const renderStart = performance.now();
+  const fetchDoneRef = useRef<number>(0);
 
-  const filtered = useMemo(() => {
-    const start = performance.now();
-    const q = query.toLowerCase();
-    const result = coins.filter(c =>
-      c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q)
-    );
-    trackFilterSort(performance.now() - start);
-    return result;
-  }, [coins, query, trackFilterSort]);
+  // Filter/Sort offloaded to Web Worker
+  const { coins: sorted } = useFilterSortWorker(coins, query, sort);
 
-  const sorted = useMemo(() => {
-    if (!sort) return filtered;
-    const start = performance.now();
-    const result = [...filtered].sort((a, b) =>
-      sort === 'asc' ? a.current_price - b.current_price : b.current_price - a.current_price
-    );
-    const elapsed = performance.now() - start;
-    trackFilterSort(elapsed);
-    return result;
-  }, [filtered, sort, trackFilterSort]);
+  // Track E2E latency: when coins array reference changes, record the time
+  useEffect(() => {
+    fetchDoneRef.current = performance.now();
+  }, [coins]);
+
+  // After render with new sorted data, measure E2E
+  useEffect(() => {
+    if (sorted.length > 0 && fetchDoneRef.current > 0) {
+      requestAnimationFrame(() => {
+        const e2e = performance.now() - fetchDoneRef.current;
+        trackE2ELatency(e2e);
+      });
+    }
+  }, [sorted, trackE2ELatency]);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
@@ -46,10 +45,6 @@ export function CoinTable({ coins, query, sort, isLoading }: CoinTableProps) {
   });
 
   useEffect(() => {
-    trackItemCounts(coins.length, sorted.length);
-  }, [coins.length, sorted.length, trackItemCounts]);
-
-  useEffect(() => {
     trackRender();
     trackRenderTime(performance.now() - renderStart);
   });
@@ -58,8 +53,12 @@ export function CoinTable({ coins, query, sort, isLoading }: CoinTableProps) {
     return <div className="flex justify-center py-12"><Spinner /></div>;
   }
 
-  if (sorted.length === 0) {
+  if (sorted.length === 0 && coins.length > 0) {
     return <p className="text-center text-gray-500 py-12">No results found.</p>;
+  }
+
+  if (sorted.length === 0) {
+    return <div className="flex justify-center py-12"><Spinner /></div>;
   }
 
   return (

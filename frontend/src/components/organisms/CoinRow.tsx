@@ -6,7 +6,7 @@ import { CoinInfo } from '../molecules/CoinInfo';
 import { ConfirmButton } from '../molecules/ConfirmButton';
 import { PriceText } from '../atoms/PriceText';
 
-export const CoinRow = memo(function CoinRow({ coin, rank }: { coin: Coin; rank: number }) {
+function CoinRowInner({ coin, rank }: { coin: Coin; rank: number }) {
   const { confirmStates, dispatch } = useContext(ConfirmContext);
   const { confirm } = useConfirmAction();
   const status = confirmStates[coin.id] || 'idle';
@@ -37,5 +37,16 @@ export const CoinRow = memo(function CoinRow({ coin, rank }: { coin: Coin; rank:
         />
       </td>
     </tr>
+  );
+}
+
+export const CoinRow = memo(CoinRowInner, (prev, next) => {
+  return (
+    prev.rank === next.rank &&
+    prev.coin.id === next.coin.id &&
+    prev.coin.current_price === next.coin.current_price &&
+    prev.coin.price_change_percentage_24h === next.coin.price_change_percentage_24h &&
+    prev.coin.market_cap === next.coin.market_cap &&
+    prev.coin.image === next.coin.image
   );
 });

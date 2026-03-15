@@ -4,6 +4,35 @@ import { fetchCoins } from '../lib/api';
 import { POLL_INTERVAL } from '../constants';
 import { ConnectionContext } from '../contexts/ConnectionContext';
 import { PerformanceContext } from '../contexts/PerformanceContext';
+import type { Coin } from '../types/coin';
+
+function coinEqual(a: Coin, b: Coin): boolean {
+  return (
+    a.id === b.id &&
+    a.current_price === b.current_price &&
+    a.price_change_percentage_24h === b.price_change_percentage_24h &&
+    a.market_cap === b.market_cap &&
+    a.high_24h === b.high_24h &&
+    a.low_24h === b.low_24h &&
+    a.total_volume === b.total_volume
+  );
+}
+
+function structuralShareCoins(oldData: Coin[] | undefined, newData: Coin[]): Coin[] {
+  if (!oldData) return newData;
+  if (oldData.length !== newData.length) return newData;
+
+  let changed = false;
+  const result = newData.map((newCoin, i) => {
+    if (coinEqual(oldData[i], newCoin)) {
+      return oldData[i]; // reuse old reference
+    }
+    changed = true;
+    return newCoin;
+  });
+
+  return changed ? result : oldData; // reuse entire array if nothing changed
+}
 
 export function useCoins(multiply = 1) {
   const { dispatch } = useContext(ConnectionContext);
@@ -20,6 +49,7 @@ export function useCoins(multiply = 1) {
       return data;
     },
     refetchInterval: POLL_INTERVAL,
+    structuralSharing: (oldData, newData) => structuralShareCoins(oldData as Coin[] | undefined, newData as Coin[]),
   });
 
   useEffect(() => {

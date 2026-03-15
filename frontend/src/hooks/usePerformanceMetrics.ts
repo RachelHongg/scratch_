@@ -11,6 +11,9 @@ export interface PerformanceMetrics {
   fetchSuccessRate: number;
   totalItems: number;
   visibleItems: number;
+  memoryUsage: number;
+  skippedRenders: number;
+  e2eLatency: number;
 }
 
 const initialMetrics: PerformanceMetrics = {
@@ -24,6 +27,9 @@ const initialMetrics: PerformanceMetrics = {
   fetchSuccessRate: 100,
   totalItems: 0,
   visibleItems: 0,
+  memoryUsage: 0,
+  skippedRenders: 0,
+  e2eLatency: 0,
 };
 
 export function usePerformanceMetrics() {
@@ -34,6 +40,7 @@ export function usePerformanceMetrics() {
   const fpsLastTimeRef = useRef(performance.now());
   const fetchStatsRef = useRef({ success: 0, total: 0 });
   const lastFetchTimeRef = useRef<number>(Date.now());
+  const skippedRendersRef = useRef(0);
 
   // FPS tracking via requestAnimationFrame
   useEffect(() => {
@@ -54,11 +61,17 @@ export function usePerformanceMetrics() {
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  // Update data freshness every second
+  // Update data freshness + memory every second
   useEffect(() => {
     const interval = setInterval(() => {
       const freshness = (Date.now() - lastFetchTimeRef.current) / 1000;
-      setMetrics({ ...metricsRef.current, dataFreshness: Math.round(freshness * 10) / 10 });
+      const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+      const memoryUsage = mem ? Math.round(mem.usedJSHeapSize / 1024 / 1024 * 10) / 10 : 0;
+      setMetrics({
+        ...metricsRef.current,
+        dataFreshness: Math.round(freshness * 10) / 10,
+        memoryUsage,
+      });
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -97,6 +110,15 @@ export function usePerformanceMetrics() {
     metricsRef.current = { ...metricsRef.current, totalItems: total, visibleItems: visible };
   }, []);
 
+  const trackSkippedRender = useCallback(() => {
+    skippedRendersRef.current++;
+    metricsRef.current = { ...metricsRef.current, skippedRenders: skippedRendersRef.current };
+  }, []);
+
+  const trackE2ELatency = useCallback((ms: number) => {
+    metricsRef.current = { ...metricsRef.current, e2eLatency: Math.round(ms * 100) / 100 };
+  }, []);
+
   return {
     metrics,
     trackRender,
@@ -105,5 +127,7 @@ export function usePerformanceMetrics() {
     trackWorkerCompute,
     trackFetch,
     trackItemCounts,
+    trackSkippedRender,
+    trackE2ELatency,
   };
 }
