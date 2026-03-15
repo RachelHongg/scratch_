@@ -1,0 +1,54 @@
+
+
+과제 안내
+
+
+
+과제명: Realtime Analysis Dashboard Mini
+
+
+
+목표:
+
+실시간 데이터 처리, 상태 전이, 비동기 액션, 대량 데이터 처리 역량을 확인합니다.
+
+
+
+필수 요구사항
+
+공개 API(CoinGecko/Binance 등)에서 가격 데이터를 주기적으로 조회해 표시해 주세요.
+화면에는 주요 심볼(예: BTC, ETH 포함) 정보를 보여주고, 검색 + 가격 정렬(오름/내림)을 지원해 주세요.
+연결 상태를 구현해 주세요: connecting, live, reconnecting, error
+Simulate 버튼으로 상태 전환이 가능해야 하며, error 상태에서는 Retry로 복구할 수 있어야 합니다.
+각 row에 Confirm 액션을 구현해 주세요.
+클릭 시 pending → 지연(600~1200ms) 후 confirmed 또는 failed
+실패 시 재시도 가능
+API에서 받아온 대량 데이터(최대 응답량 기준)를 활용해 파생 지표 1개 이상 계산해 주세요
+(예: 변동성, 상위 변동 종목, 이동평균 등).
+위 계산은 UI 블로킹을 줄이도록 **Web Worker(또는 동등한 분리 방식)**로 처리해 주세요.
+테스트 최소 3개 작성 (예: 정렬/필터, 상태 전이, pending→confirmed/failed).
+
+선택 요구사항 (택1)
+Fullstack 옵션
+
+Confirm 액션을 간단한 mock API 서버 응답 기반으로 처리해 주세요.
+성공/실패 응답과 지연을 서버에서 제어하고, 프론트는 해당 응답에 따라 상태를 반영해 주세요.
+Frontend 옵션 (URL 상태 동기화)
+
+검색어/정렬/필터(있다면)를 URL query string과 동기화해 주세요.
+예: ?q=btc&sort=desc
+새로고침 후에도 같은 화면 상태가 복원되어야 하며, URL 공유 시 동일 조건 화면이 재현되어야 합니다.
+
+기술 제약
+React + TypeScript 필수 (Next.js 선택)
+AI 도구 사용 가능
+
+필수 문서
+README.md (실행 방법, 아키텍처 요약, 트레이드오프, API/데이터 처리 방식)
+AI_USAGE.md (사용 도구, 핵심 프롬프트, 채택/수정/폐기 이유)
+DECISIONS.md (구조 선택 이유 + 추가 시간 시 개선 계획)
+
+제출물
+GitHub 링크 또는 zip 파일
+README.md, AI_USAGE.md, DECISIONS.md
+(선택) 2~3분 데모 영상
