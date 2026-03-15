@@ -13,20 +13,29 @@ interface CoinTableProps {
   isLoading: boolean;
 }
 
+const COL_WIDTHS = ['5%', '25%', '15%', '15%', '25%', '15%'];
+
+function ColGroup() {
+  return (
+    <colgroup>
+      {COL_WIDTHS.map((w, i) => (
+        <col key={i} style={{ width: w }} />
+      ))}
+    </colgroup>
+  );
+}
+
 export function CoinTable({ coins, query, sort, isLoading }: CoinTableProps) {
   const { trackRender, trackRenderTime, trackE2ELatency } = useContext(PerformanceContext);
   const renderStart = performance.now();
   const fetchDoneRef = useRef<number>(0);
 
-  // Filter/Sort offloaded to Web Worker
   const { coins: sorted } = useFilterSortWorker(coins, query, sort);
 
-  // Track E2E latency: when coins array reference changes, record the time
   useEffect(() => {
     fetchDoneRef.current = performance.now();
   }, [coins]);
 
-  // After render with new sorted data, measure E2E
   useEffect(() => {
     if (sorted.length > 0 && fetchDoneRef.current > 0) {
       requestAnimationFrame(() => {
@@ -63,7 +72,8 @@ export function CoinTable({ coins, query, sort, isLoading }: CoinTableProps) {
 
   return (
     <div className="bg-white rounded-lg shadow">
-      <table className="w-full">
+      <table className="w-full table-fixed">
+        <ColGroup />
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
             <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase">#</th>
@@ -91,7 +101,8 @@ export function CoinTable({ coins, query, sort, isLoading }: CoinTableProps) {
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
               >
-                <table className="w-full">
+                <table className="w-full table-fixed">
+                  <ColGroup />
                   <tbody>
                     <CoinRow coin={coin} rank={virtualRow.index + 1} />
                   </tbody>
