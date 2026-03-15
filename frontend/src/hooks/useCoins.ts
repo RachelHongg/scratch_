@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useContext, useEffect, useRef } from 'react';
-import { fetchCoins } from '../lib/api';
+import { fetchCoins, type CoinsResponse } from '../lib/api';
 import { POLL_INTERVAL } from '../constants';
 import { ConnectionContext } from '../contexts/ConnectionContext';
 import { PerformanceContext } from '../contexts/PerformanceContext';
@@ -18,20 +18,22 @@ function coinEqual(a: Coin, b: Coin): boolean {
   );
 }
 
-function structuralShareCoins(oldData: Coin[] | undefined, newData: Coin[]): Coin[] {
+function structuralShareResponse(oldData: CoinsResponse | undefined, newData: CoinsResponse): CoinsResponse {
   if (!oldData) return newData;
-  if (oldData.length !== newData.length) return newData;
+  if (oldData.connection_status !== newData.connection_status) return newData;
+  if (oldData.data.length !== newData.data.length) return newData;
 
   let changed = false;
-  const result = newData.map((newCoin, i) => {
-    if (coinEqual(oldData[i], newCoin)) {
-      return oldData[i]; // reuse old reference
+  const result = newData.data.map((newCoin, i) => {
+    if (coinEqual(oldData.data[i], newCoin)) {
+      return oldData.data[i];
     }
     changed = true;
     return newCoin;
   });
 
-  return changed ? result : oldData; // reuse entire array if nothing changed
+  if (!changed) return oldData;
+  return { ...newData, data: result };
 }
 
 export function useCoins(multiply = 1) {
@@ -43,20 +45,22 @@ export function useCoins(multiply = 1) {
     queryKey: ['coins', multiply],
     queryFn: async () => {
       fetchStartRef.current = performance.now();
-      const data = await fetchCoins(multiply);
+      dispatch({ type: 'FETCHING' });
+      const response = await fetchCoins(multiply);
       const latency = performance.now() - fetchStartRef.current;
       trackFetch(true, latency);
-      return data;
+      return response;
     },
     refetchInterval: POLL_INTERVAL,
-    structuralSharing: (oldData, newData) => structuralShareCoins(oldData as Coin[] | undefined, newData as Coin[]),
+    structuralSharing: (oldData, newData) =>
+      structuralShareResponse(oldData as CoinsResponse | undefined, newData as CoinsResponse),
   });
 
   useEffect(() => {
-    if (query.isSuccess) {
-      dispatch({ type: 'CONNECTED' });
+    if (query.isSuccess && query.data) {
+      dispatch({ type: 'CONNECTED', connectionStatus: query.data.connection_status });
     }
-  }, [query.isSuccess, query.dataUpdatedAt, dispatch]);
+  }, [query.isSuccess, query.dataUpdatedAt, query.data, dispatch]);
 
   useEffect(() => {
     if (query.isError) {
@@ -66,5 +70,10 @@ export function useCoins(multiply = 1) {
     }
   }, [query.isError, dispatch, trackFetch]);
 
-  return { coins: query.data ?? [], isLoading: query.isLoading, isError: query.isError, refetch: query.refetch };
+  return {
+    coins: query.data?.data ?? [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
 }

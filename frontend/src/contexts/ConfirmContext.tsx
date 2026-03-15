@@ -12,6 +12,7 @@ function confirmReducer(state: ConfirmState, action: ConfirmAction): ConfirmStat
     case 'SUCCESS': return { ...state, [action.coinId]: 'confirmed' };
     case 'FAIL': return { ...state, [action.coinId]: 'failed' };
     case 'RESET': return { ...state, [action.coinId]: 'idle' };
+    case 'RESET_ALL': return {};
     default: return state;
   }
 }

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import coins, confirm
+from routers import coins, confirm, connection
 
 app = FastAPI()
 
@@ -14,6 +14,7 @@ app.add_middleware(
 
 app.include_router(coins.router)
 app.include_router(confirm.router)
+app.include_router(connection.router)
 
 if __name__ == "__main__":
     import uvicorn

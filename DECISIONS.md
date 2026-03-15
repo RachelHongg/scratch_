@@ -67,13 +67,21 @@ Performance Monitor 패널로 실시간 지표 추적.
 - **history.replaceState 선택**: pushState는 뒤로 가기 시 매 타이핑마다 히스토리 생성. replaceState로 히스토리 오염 방지
 - **검색 debounce 300ms**: 타이핑 중 과도한 URL 업데이트 방지
 
-## 9. 연결 상태 머신
+## 9. 서버 기반 연결 시뮬레이션
 
-useReducer 기반 유한 상태 머신으로 연결 상태 관리.
+시뮬레이션 상태를 서버에서 관리하고, API 응답을 실제로 변경하는 구조.
 
-- **상태**: connecting → live → reconnecting → error
-- **근거**: 상태 전이를 순수 함수로 정의하여 테스트 용이. 무효 전이는 자동 무시 (no-op)
-- **시뮬레이션 지원**: FORCE 액션으로 데모 시 임의 상태 강제 전환 가능
+- **상태**: connecting → live | confirmed | error (서버 응답에 의해 결정)
+- **근거**: 초기에는 프론트엔드 `FORCE` 액션으로 구현했으나, 폴링의 자동 dispatch가 강제 상태를 즉시 덮어쓰는 버그 발생. 시뮬레이션 모드 플래그로 우회하는 것보다 서버가 직접 응답을 바꾸는 것이 더 현실적이고 Confirm API와도 자연스럽게 연동
+- **Refresh = 초기화 액션**: 시뮬레이션 해제 + Confirm 상태 전체 리셋. 시뮬레이션 버튼(Live/Error/Confirmed)은 테이블 Confirm 상태를 유지
+
+## 10. Test Mode 분리
+
+Data Scale(스트레스 테스트)과 Performance Monitor를 Test Mode로 분리.
+
+- **근거**: 일반 사용자에게는 불필요한 개발/테스트 도구. 네비게이션 바 토글로 진입하여 필요할 때만 표시
+- **구현**: App 레벨 `testMode` 상태 → DashboardLayout에 토글 버튼, Dashboard에 조건부 Data Scale 렌더링, PerformanceMonitor 조건부 마운트
+- **일반 모드**: 항상 1x(50개) 데이터 사용, Performance Monitor 숨김
 
 ## 향후 개선 계획
 

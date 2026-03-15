@@ -1,8 +1,5 @@
-export type ConnectionState = 'connecting' | 'live' | 'reconnecting' | 'error';
+export type ConnectionState = 'connecting' | 'live' | 'confirmed' | 'error';
 export type ConnectionAction =
-  | { type: 'CONNECT' }
-  | { type: 'CONNECTED' }
-  | { type: 'DISCONNECT' }
+  | { type: 'CONNECTED'; connectionStatus: 'live' | 'confirmed' }
   | { type: 'ERROR' }
-  | { type: 'RETRY' }
-  | { type: 'FORCE'; state: ConnectionState };
+  | { type: 'FETCHING' };
