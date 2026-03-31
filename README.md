@@ -2,6 +2,20 @@
 
 CoinGecko API 기반 암호화폐 실시간 대시보드. 대량 데이터 처리와 실시간 데이터 갱신에 초점을 맞춘 프로젝트.
 
+## demo 영상
+### Main Page (dashboard)
+- Confirm 액션은 상태 전이(idle → pending → confirmed/failed)를 통해 시뮬레이션 흐름을 명확하게 표현
+- 검색/정렬 기능
+- 실시간 파생 지표 계산
+
+[![암호화폐 대시보드(1)](http://img.youtube.com/vi/7XWkpT25sro/0.jpg)](https://youtu.be/7XWkpT25sro)
+
+### Test Mode Page (stress test)
+- 데이터 스케일을 조절해 스트레스 테스트 수행
+- Performance 지표로 실시간 성능 확인
+
+[![암호화폐 대시보드(2) - Test Mode](https://img.youtube.com/vi/tlwYMIiFdUc/0.jpg)](https://youtu.be/tlwYMIiFdUc)
+
 ## 실행 방법
 
 ### Backend
@@ -58,7 +72,7 @@ Backend (FastAPI)
 | 파생 지표 | Web Worker에서 변동성 Top 5 / 상위 변동 종목 Top 5 계산 |
 | 가상 스크롤링 | 5000개 행에서도 FPS 60 유지 |
 | Test Mode | 네비게이션 바 토글로 진입. Data Scale + Performance Monitor 표시 |
-| 스트레스 테스트 | Test Mode에서 1x~100x (50~5000개) 데이터 스케일 조절 |
+| 스트레스 테스트 | Test Mode에서 1x ~ 100x (50 ~ 5000개) 데이터 스케일 조절 |
 
 ## 연결 시뮬레이션
 
